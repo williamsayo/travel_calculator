@@ -1,50 +1,59 @@
 pipeline {
     agent any
+
     tools {
         maven 'Maven@latest'
     }
+
     environment {
         GIT_REPOSITORY = 'https://github.com/williamsayo/travel_calculator'
         DOCKER_CREDENTIALS = 'docker_cred'
         DOCKER_REPOSITORY = 'williamsayo/travelcalculator'
         DOCKER_TAG = 'latest'
     }
+
     stages {
-       stage('Checkout') {
+
+        stage('Checkout') {
             steps {
-                git '${REPOSITORY}'
+                git "${GIT_REPOSITORY}"
             }
-       }
+        }
 
-       stage('build') {
-           steps {
-               bat 'mvn clean install'
-           }
-       }
-       stage('test') {
-         steps {
-             bat 'mvn test'
-         }
-      }
-      stage('publish report') {
-         steps {
-              bat 'mvn jacoco:report'
-         }
-      }
+        stage('Build') {
+            steps {
+                bat 'mvn clean install'
+            }
+        }
 
-      stage('build docker image') {
-          steps {
+        stage('Test') {
+            steps {
+                bat 'mvn test'
+            }
+        }
+
+        stage('Publish Report') {
+            steps {
+                bat 'mvn jacoco:report'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
                 script {
-                    docker.build('${DOCKER_REPOSITORY}:${DOCKER_TAG}')
+                    appImage = docker.build("${DOCKER_REPOSITORY}:${DOCKER_TAG}")
                 }
             }
-          }
-      stage('publish docker image') {
-          steps {
+        }
+
+        stage('Publish Docker Image') {
+            steps {
                 script {
-                    docker.withCredentials('https://index.docker.io/v1/','${DOCKER_CREDENTIALS}') {
-                        docker.build('${DOCKER_REPOSITORY}:${DOCKER_TAG}').push()
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
+                        appImage.push()
                     }
                 }
-      }
+            }
+        }
+    }
 }
