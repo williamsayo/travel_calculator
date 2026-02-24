@@ -39,7 +39,6 @@ pipeline {
                 }
             }
           }
-      }
       stage('publish docker image') {
           steps {
                 script {
@@ -47,6 +46,5 @@ pipeline {
                         docker.build('${DOCKER_REPOSITORY}:${DOCKER_TAG}').push()
                     }
                 }
-          }
       }
 }
